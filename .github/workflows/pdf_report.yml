@@ -17,8 +17,8 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 Install dependencies
-        run: |
-          pip install matplotlib
+        run: pip install -r requirements.txt
+
 
       - name: 📄 Run script to generate PDF
         run: python report_generator.py
