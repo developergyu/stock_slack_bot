@@ -1,0 +1,37 @@
+name: Generate and Send PDF Report
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔽 Checkout repository
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install matplotlib
+
+      - name: 📄 Run script to generate PDF
+        run: python report_generator.py
+
+      - name: 📤 Upload PDF artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: report-pdf
+          path: report_*.pdf
+
+      - name: 📩 Send PDF to Slack
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload-file-path: ./slack-payload.json
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
