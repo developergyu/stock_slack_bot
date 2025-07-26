@@ -34,7 +34,7 @@ jobs:
         with:
           payload: |
             {
-              "channel": "#stock_daily",
+              "channel": "C097595CPF1",
               "text": "📄 새로운 PDF 보고서가 생성되었습니다.",
               "attachments": [
                 {
