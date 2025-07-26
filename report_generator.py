@@ -96,7 +96,7 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
 
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
-    slack_token = os.environ.get("SLACK_BOT_TOKEN")
+    slack_token = "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"
     slack_channel = "C097595CPF1"  # 채널 ID (예: C1234567890)
     if not slack_token or not slack_channel:
         print("🚨 SLACK_BOT_TOKEN 또는 SLACK_CHANNEL_ID 환경변수가 설정되어 있지 않습니다.")
