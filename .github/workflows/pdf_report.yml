@@ -35,6 +35,7 @@ jobs:
           payload: |
             {
               "channel": "C097595CPF1",
+              "token" : "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL",
               "text": "📄 새로운 PDF 보고서가 생성되었습니다.",
               "attachments": [
                 {
@@ -43,6 +44,4 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_BOT_TOKEN: "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"
 
