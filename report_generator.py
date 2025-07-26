@@ -60,7 +60,7 @@ up_stock_tickers = up_stocks.index.tolist()
 plot_df = combined_df.loc[combined_df.index >= (target_dt - timedelta(days=30))]
 normalized = plot_df / plot_df.iloc[0]
 
-# PDF 저장
+# PDF 저장 함수
 def save_to_pdf(tickers, norm_df, name_map, filename=None):
     if filename is None:
         today = datetime.now().strftime("%Y%m%d")
@@ -94,9 +94,30 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
     print(f"✅ PDF 저장 완료: {filename}")
     return filename
 
+# Slack에 PDF 업로드 및 메시지 보내기 함수
+def send_pdf_to_slack(pdf_file_path):
+    slack_token = os.environ.get("SLACK_BOT_TOKEN")
+    slack_channel = os.environ.get("SLACK_CHANNEL_ID")  # 채널 ID (예: C1234567890)
+    if not slack_token or not slack_channel:
+        print("🚨 SLACK_BOT_TOKEN 또는 SLACK_CHANNEL_ID 환경변수가 설정되어 있지 않습니다.")
+        return
+
+    client = WebClient(token=slack_token)
+    try:
+        response = client.files_upload(
+            channels=slack_channel,
+            file=pdf_file_path,
+            title=os.path.basename(pdf_file_path),
+            initial_comment="📄 새로운 PDF 보고서가 도착했습니다!"
+        )
+        print("✅ Slack으로 PDF 전송 성공:", response["file"]["id"])
+    except SlackApiError as e:
+        print(f"🚨 Slack API 에러: {e.response['error']}")
+
 # 실행
 if len(up_stock_tickers) == 0:
     print("상승 종목 없음.")
     exit()
 
 pdf_path = save_to_pdf(up_stock_tickers, normalized, ticker_to_name)
+send_pdf_to_slack(pdf_path)
