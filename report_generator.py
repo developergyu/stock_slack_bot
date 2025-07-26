@@ -94,26 +94,9 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
     print(f"✅ PDF 저장 완료: {filename}")
     return filename
 
-# Slack 전송
-def send_slack_pdf(file_path, comment="📄 자동 생성된 리포트입니다."):
-    slack_token = "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"
-    channel_id = "C097595CPF1"
-    client = WebClient(token=slack_token)
-    try:
-        response = client.files_upload(
-            channels=channel_id,
-            file=file_path,
-            initial_comment=comment,
-            title=os.path.basename(file_path)
-        )
-        print(f"✅ Slack 전송 성공: {response['file']['name']}")
-    except SlackApiError as e:
-        print(f"🚨 Slack 전송 실패: {e.response['error']}")
-
 # 실행
 if len(up_stock_tickers) == 0:
     print("상승 종목 없음.")
     exit()
 
 pdf_path = save_to_pdf(up_stock_tickers, normalized, ticker_to_name)
-send_slack_pdf(pdf_path)
