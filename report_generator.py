@@ -96,7 +96,7 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
 
 # Slack 전송
 def send_slack_pdf(file_path, comment="📄 자동 생성된 리포트입니다."):
-    slack_token = os.environ["xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"]
+    slack_token = "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"
     channel_id = "C08PZA5D6CC"
     client = WebClient(token=slack_token)
     try:
