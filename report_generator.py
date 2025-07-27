@@ -146,7 +146,7 @@ def send_pdf_to_slack(pdf_file_path):
     attachment = {
     "files": [{
         "id": file_id,
-        "title": "report.pdf"
+        "title": filename
     }],
     "channel_id": CHANNEL_ID, # 업로드할 채널 ID
     }
