@@ -14,7 +14,6 @@ import json
 # 날짜 설정
 end_date = datetime.today()
 start_date = end_date - timedelta(days=60)
-#target_date = datetime.today()
 target_date = "2025-07-22"
 target_dt = pd.to_datetime(target_date)
 
@@ -69,6 +68,16 @@ if kospi_ret >= 0:
     msg = f"📈 `{target_date.strftime('%Y-%m-%d')}`는 코스피가 하락한 날이 아닙니다."
     send_text_to_slack(msg)
     exit()
+    
+# 조건 검사
+if target_dt not in returns.index:
+    print(f"{target_date} 데이터 없음.")
+    exit()
+
+kospi_ret = returns.loc[target_dt]['KOSPI']
+if kospi_ret >= 0:
+    print(f"{target_date}는 코스피가 하락한 날이 아닙니다.")
+    exit()
 
 # 상승 종목 추출
 daily_returns = returns.loc[target_dt].drop('KOSPI')
@@ -78,7 +87,6 @@ up_stock_tickers = up_stocks.index.tolist()
 # 최근 1개월 데이터
 plot_df = combined_df.loc[combined_df.index >= (target_dt - timedelta(days=30))]
 normalized = plot_df / plot_df.iloc[0]
-
 
 # PDF 저장 함수
 def save_to_pdf(tickers, norm_df, name_map, filename=None):
@@ -114,7 +122,6 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
     print(f"✅ PDF 저장 완료: {filename}")
     return filename
 
-
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
     slack_token = os.environ.get("SLACK_BOT_TOKEN")
@@ -137,17 +144,16 @@ def send_pdf_to_slack(pdf_file_path):
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
         response = requests.post(url="https://slack.com/api/files.getUploadURLExternal", headers=headers, data=data)
     data = json.loads(response.text)
-    
     upload_url = data.get("upload_url")
     file_id = data.get("file_id")
     upload_response = requests.post(url=upload_url, files={'file': content})
-
+    print(upload_response.text)
     attachment = {
     "files": [{
         "id": file_id,
         "title": pdf_file_path
     }],
-    "channel": CHANNEL_ID # 업로드할 채널 ID
+    "channel_id": CHANNEL_ID # 업로드할 채널 ID
     }
     headers['Content-Type'] = 'application/json; charset=utf-8'
     upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
