@@ -117,7 +117,6 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
 
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
-    print(pdf_file_path)
     slack_token = os.environ.get("SLACK_BOT_TOKEN")
     CHANNEL_ID = "C097595CPF1"
     headers = {
@@ -126,20 +125,19 @@ def send_pdf_to_slack(pdf_file_path):
     }
     # 이미지 업로드
     try:
-        today = datetime.now().strftime("%Y%m%d")
-        filename = f"report_{today}.pdf"
         with open(pdf_file_path, 'rb') as f:
             content = f.read()
     except FileNotFoundError:
         content = None
     if content is not None:
         data = {
-            "filename": filename,
+            "filename": pdf_file_path,
             "length": len(content),  # 파일 크기(바이트 단위)
         }
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
         response = requests.post(url="https://slack.com/api/files.getUploadURLExternal", headers=headers, data=data)
     data = json.loads(response.text)
+    print(response.text)
     upload_url = data.get("upload_url")
     file_id = data.get("file_id")
     upload_response = requests.post(url=upload_url, files={'file': content})
