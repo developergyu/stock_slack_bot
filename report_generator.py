@@ -55,6 +55,7 @@ def send_text_to_slack(text):
         "text": text
     }
     requests.post("https://slack.com/api/chat.postMessage", headers=headers, json=payload)
+    print("✅ Slack 메시지 전송 완료!")
 
 # 조건 검사 및 메시지 전송
 if target_dt not in returns.index:
