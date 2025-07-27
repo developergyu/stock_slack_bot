@@ -2,8 +2,9 @@ name: Generate and Send PDF Report
 
 on:
   schedule:
-    - cron: '56 2 * * *'
-
+    - cron: '02 3 * * *'
+  workflow_dispatch:       # ← 수동 실행 버튼을 위해 추가
+  
 jobs:
   build:
     runs-on: ubuntu-latest
