@@ -125,13 +125,15 @@ def send_pdf_to_slack(pdf_file_path):
     }
     # 이미지 업로드
     try:
+        today = datetime.now().strftime("%Y%m%d")
+        filename = f"report_{today}.pdf"
         with open(pdf_file_path, 'rb') as f:
             content = f.read()
     except FileNotFoundError:
         content = None
     if content is not None:
         data = {
-            "filename": "report.pdf",
+            "filename": filename,
             "length": len(content),  # 파일 크기(바이트 단위)
         }
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
