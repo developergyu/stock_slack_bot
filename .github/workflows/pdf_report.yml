@@ -2,8 +2,8 @@ name: Generate and Send PDF Report
 
 on:
   schedule:
-  - cron: '0 5 * * 1-5'
-  workflow_dispatch:
+    - cron: '30 8 * * 1-5'  # 매주 월~금 오전 8시 UTC = 오후 5시 KST
+  workflow_dispatch:        # 수동 실행도 가능하게 추가
 
 jobs:
   build:
