@@ -117,6 +117,7 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
 
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
+    print(pdf_file_path)
     slack_token = os.environ.get("SLACK_BOT_TOKEN")
     CHANNEL_ID = "C097595CPF1"
     headers = {
@@ -152,7 +153,6 @@ def send_pdf_to_slack(pdf_file_path):
     }
     headers['Content-Type'] = 'application/json; charset=utf-8'
     upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
-    print(filename)
     print("✅ Slack 파일 업로드 및 메시지 전송 완료!")
 
 # 실행
