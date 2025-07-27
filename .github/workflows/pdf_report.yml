@@ -2,8 +2,7 @@ name: Generate and Send PDF Report
 
 on:
   schedule:
-    - cron: '52 2 * * *'
-  workflow_dispatch:
+    - cron: '56 2 * * *'
 
 jobs:
   build:
