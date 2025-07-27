@@ -3,3 +3,4 @@ pandas
 matplotlib
 pykrx
 slack_sdk
+requests
