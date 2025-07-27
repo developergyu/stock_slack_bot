@@ -147,8 +147,7 @@ def send_pdf_to_slack(pdf_file_path):
         "id": file_id,
         "title": pdf_file_path
     }],
-    "channel": CHANNEL_ID, # 업로드할 채널 ID
-    "text": "upload"
+    "channel": CHANNEL_ID # 업로드할 채널 ID
     }
     headers['Content-Type'] = 'application/json; charset=utf-8'
     upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
