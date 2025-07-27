@@ -2,8 +2,7 @@ name: Generate and Send PDF Report
 
 on:
   schedule:
-    - cron: '36 2 * * *'   # KST 11:36에 실행됨 (UTC 기준 02:36)
-  workflow_dispatch:         # 수동 실행 버튼도 허용
+    - cron: "0 10 * * 2"
 
 jobs:
   build:
