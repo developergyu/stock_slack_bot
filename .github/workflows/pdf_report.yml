@@ -21,4 +21,6 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: 📄 Run script to generate PDF
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: python report_generator.py
