@@ -12,14 +12,13 @@ import requests
 import json
 
 # 날짜 설정
-#end_date = datetime.today()
-end_date = "2025-07-22"
+end_date = datetime.today()
 start_date = end_date - timedelta(days=60)
 target_date = datetime.today()
 target_dt = pd.to_datetime(target_date)
 
 # 시가총액 상위 100종목
-today_str = end_date.strftime('%Y%m%d')
+today_str = "2025-07-22"
 market_cap_df = stock.get_market_cap_by_ticker(today_str)
 top100_df = market_cap_df.sort_values(by='시가총액', ascending=False).head(100)
 top100_tickers = top100_df.index.to_list()
