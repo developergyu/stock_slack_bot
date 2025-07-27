@@ -132,10 +132,10 @@ def send_pdf_to_slack(pdf_file_path):
 
     print("✅ Slack 파일 업로드 및 메시지 전송 완료!")
 
-except SlackApiError as e:
-    print(f"Slack API 오류: {e.response['error']}")
-except requests.HTTPError as e:
-    print(f"파일 업로드 HTTP 오류: {e}")
+    except SlackApiError as e:
+        print(f"Slack API 오류: {e.response['error']}")
+    except requests.HTTPError as e:
+        print(f"파일 업로드 HTTP 오류: {e}")
 
 # 실행
 if len(up_stock_tickers) == 0:
