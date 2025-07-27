@@ -97,22 +97,45 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
     slack_token = "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"
-    slack_channel = "C097595CPF1"  # 채널 ID (예: C1234567890)
-    if not slack_token or not slack_channel:
-        print("🚨 SLACK_BOT_TOKEN 또는 SLACK_CHANNEL_ID 환경변수가 설정되어 있지 않습니다.")
-        return
-
-    client = WebClient(token=slack_token)
+    CHANNEL_ID = "C097595CPF1"
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {slack_token}'
+    }
+    # 이미지 업로드
     try:
-        response = client.files_upload(
-            channels=slack_channel,
-            file=pdf_file_path,
-            title=os.path.basename(pdf_file_path),
-            initial_comment="📄 새로운 PDF 보고서가 도착했습니다!"
-        )
-        print("✅ Slack으로 PDF 전송 성공:", response["file"]["id"])
-    except SlackApiError as e:
-        print(f"🚨 Slack API 에러: {e.response['error']}")
+        with open(pdf_file_path, 'rb') as f:
+            content = f.read()
+    except FileNotFoundError:
+        content = None
+    if content is not None:
+        data = {
+            "filename": "report.pdf",
+            "length": len(content),  # 파일 크기(바이트 단위)
+        }
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        response = requests.post(url="https://slack.com/api/files.getUploadURLExternal", headers=headers, data=data)
+    data = json.loads(response.text)
+    upload_url = data.get("upload_url")
+    file_id = data.get("file_id")
+    upload_response = requests.post(url=upload_url, files={'file': content})
+
+    attachment = {
+    "files": [{
+        "id": file_id,
+        "title": "report.pdf"
+    }],
+    "channel_id": CHANNEL_ID, # 업로드할 채널 ID
+    }
+    headers['Content-Type'] = 'application/json; charset=utf-8'
+    upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
+
+    print("✅ Slack 파일 업로드 및 메시지 전송 완료!")
+
+except SlackApiError as e:
+    print(f"Slack API 오류: {e.response['error']}")
+except requests.HTTPError as e:
+    print(f"파일 업로드 HTTP 오류: {e}")
 
 # 실행
 if len(up_stock_tickers) == 0:
