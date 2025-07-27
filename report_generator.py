@@ -43,14 +43,29 @@ combined_df.dropna(inplace=True)
 # 수익률 계산
 returns = combined_df.pct_change().dropna()
 
-# 조건 검사
+def send_text_to_slack(text):
+    slack_token = "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"
+    CHANNEL_ID = "C097595CPF1"
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {slack_token}'
+    }
+    payload = {
+        "channel": CHANNEL_ID,
+        "text": text
+    }
+    requests.post("https://slack.com/api/chat.postMessage", headers=headers, json=payload)
+
+# 조건 검사 및 메시지 전송
 if target_dt not in returns.index:
-    print(f"{target_date} 데이터 없음.")
+    msg = f"📉 `{target_date.strftime('%Y-%m-%d')}` 데이터가 없습니다."
+    send_text_to_slack(msg)
     exit()
 
 kospi_ret = returns.loc[target_dt]['KOSPI']
 if kospi_ret >= 0:
-    print(f"{target_date}는 코스피가 하락한 날이 아닙니다.")
+    msg = f"📈 `{target_date.strftime('%Y-%m-%d')}`는 코스피가 하락한 날이 아닙니다."
+    send_text_to_slack(msg)
     exit()
 
 # 상승 종목 추출
@@ -61,6 +76,7 @@ up_stock_tickers = up_stocks.index.tolist()
 # 최근 1개월 데이터
 plot_df = combined_df.loc[combined_df.index >= (target_dt - timedelta(days=30))]
 normalized = plot_df / plot_df.iloc[0]
+
 
 # PDF 저장 함수
 def save_to_pdf(tickers, norm_df, name_map, filename=None):
@@ -95,6 +111,7 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
             plt.close(fig)
     print(f"✅ PDF 저장 완료: {filename}")
     return filename
+
 
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
