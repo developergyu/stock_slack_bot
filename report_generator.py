@@ -44,7 +44,7 @@ combined_df.dropna(inplace=True)
 returns = combined_df.pct_change().dropna()
 
 def send_text_to_slack(text):
-    slack_token = os.getenv("SLACK_BOT_TOKEN")
+    slack_token = os.environ.get("SLACK_BOT_TOKEN")
     CHANNEL_ID = "C097595CPF1"
     headers = {
         'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
 
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
-    slack_token = os.getenv("SLACK_BOT_TOKEN")
+    slack_token = os.environ.get("SLACK_BOT_TOKEN")
     CHANNEL_ID = "C097595CPF1"
     headers = {
         'Content-Type': 'application/json',
