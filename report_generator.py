@@ -96,7 +96,6 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
 
 # Slack에 PDF 업로드 및 메시지 보내기 함수
 def send_pdf_to_slack(pdf_file_path):
-try:
     slack_token = "xoxb-8814404486082-8823593439953-Fzy83jQ6BFmmu3HnsDnjENDL"
     CHANNEL_ID = "C097595CPF1"
     headers = {
@@ -132,11 +131,6 @@ try:
     upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
 
     print("✅ Slack 파일 업로드 및 메시지 전송 완료!")
-
-except SlackApiError as e:
-    print(f"Slack API 오류: {e.response['error']}")
-except requests.HTTPError as e:
-    print(f"파일 업로드 HTTP 오류: {e}")
 
 # 실행
 if len(up_stock_tickers) == 0:
