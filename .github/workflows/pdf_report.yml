@@ -2,7 +2,7 @@ name: Generate and Send PDF Report
 
 on:
   schedule:
-    - cron: '06 3 * * *'
+    - cron: '08 3 * * *'
 
 jobs:
   build:
