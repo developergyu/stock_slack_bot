@@ -2,9 +2,9 @@ name: Generate and Send PDF Report
 
 on:
   schedule:
-    - cron: '02 3 * * *'
-  workflow_dispatch:       # ← 수동 실행 버튼을 위해 추가
-  
+    - cron: '36 2 * * *'   # KST 11:36에 실행됨 (UTC 기준 02:36)
+  workflow_dispatch:         # 수동 실행 버튼도 허용
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,4 +22,3 @@ jobs:
 
       - name: 📄 Run script to generate PDF
         run: python report_generator.py
-
