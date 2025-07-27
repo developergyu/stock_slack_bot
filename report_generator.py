@@ -137,7 +137,7 @@ def send_pdf_to_slack(pdf_file_path):
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
         response = requests.post(url="https://slack.com/api/files.getUploadURLExternal", headers=headers, data=data)
     data = json.loads(response.text)
-    print(response.text)
+    
     upload_url = data.get("upload_url")
     file_id = data.get("file_id")
     upload_response = requests.post(url=upload_url, files={'file': content})
@@ -145,12 +145,13 @@ def send_pdf_to_slack(pdf_file_path):
     attachment = {
     "files": [{
         "id": file_id,
-        "title": filename
+        "title": pdf_file_path
     }],
     "channel_id": CHANNEL_ID, # 업로드할 채널 ID
     }
     headers['Content-Type'] = 'application/json; charset=utf-8'
     upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
+    print(upload_response.text)
     print("✅ Slack 파일 업로드 및 메시지 전송 완료!")
 
 # 실행
