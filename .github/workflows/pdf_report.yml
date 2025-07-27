@@ -1,9 +1,7 @@
 name: Generate and Send PDF Report
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'  # 매 5분마다 실행
-  workflow_dispatch:        # 수동 실행 가능
+  workflow_dispatch: 
 
 jobs:
   build:
