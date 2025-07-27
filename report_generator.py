@@ -12,7 +12,8 @@ import requests
 import json
 
 # 날짜 설정
-end_date = datetime.today()
+#end_date = datetime.today()
+end_date = "2025-07-22"
 start_date = end_date - timedelta(days=60)
 target_date = datetime.today()
 target_dt = pd.to_datetime(target_date)
