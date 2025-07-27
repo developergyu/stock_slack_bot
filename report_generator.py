@@ -8,6 +8,8 @@ import math
 import os
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+import requests
+import json
 
 # 날짜 설정
 end_date = datetime.today() - timedelta(days=1)
