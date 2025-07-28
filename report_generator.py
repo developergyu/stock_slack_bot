@@ -6,10 +6,10 @@ from pykrx import stock
 from matplotlib.backends.backend_pdf import PdfPages
 import math
 import os
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
 import requests
 import json
+import feedparser
+import urllib.parse
 
 # 날짜 설정
 end_date = datetime.today() + timedelta(days=1)
@@ -54,8 +54,22 @@ def send_text_to_slack(text):
         "channel": CHANNEL_ID,
         "text": text
     }
-    requests.post("https://slack.com/api/chat.postMessage", headers=headers, json=payload)
-    print("✅ Slack 메시지 전송 완료!")
+    resp = requests.post("https://slack.com/api/chat.postMessage", headers=headers, json=payload)
+    if resp.ok and resp.json().get("ok"):
+        print("✅ Slack 메시지 전송 완료!")
+    else:
+        print("❌ Slack 메시지 전송 실패:", resp.text)
+
+def get_google_news_rss(query, count=3):
+    encoded_query = urllib.parse.quote_plus(query)  # 공백 등 URL 인코딩 처리
+    rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
+    feed = feedparser.parse(rss_url)
+    news_items = []
+    for entry in feed.entries[:count]:
+        title = entry.title
+        link = entry.link
+        news_items.append(f"- {title}\n  {link}")
+    return news_items
 
 # 조건 검사 및 메시지 전송
 if target_dt not in returns.index:
@@ -80,6 +94,25 @@ send_text_to_slack(msg)
 daily_returns = returns.loc[target_dt].drop('KOSPI')
 up_stocks = daily_returns[daily_returns > 0]
 up_stock_tickers = up_stocks.index.tolist()
+
+if len(up_stock_tickers) == 0:
+    print("상승 종목 없음.")
+    exit()
+
+# 상승 종목별 뉴스 수집 및 슬랙 메시지 생성
+news_message = f"🗞️ *{target_date.strftime('%Y-%m-%d')} 상승 종목별 뉴스 요약 (최대 3건씩)*\n"
+for ticker in up_stock_tickers:
+    name = ticker_to_name.get(ticker, ticker)
+    query = name
+    news_list = get_google_news_rss(query, count=3)
+    news_message += f"\n*{name} ({ticker})*\n"
+    if news_list:
+        news_message += "\n".join(news_list)
+    else:
+        news_message += "- 뉴스 없음\n"
+
+# 슬랙으로 뉴스 메시지 전송
+send_text_to_slack(news_message)
 
 # 최근 1개월 데이터
 plot_df = combined_df.loc[combined_df.index >= (target_dt - timedelta(days=30))]
@@ -127,7 +160,6 @@ def send_pdf_to_slack(pdf_file_path):
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {slack_token}'
     }
-    # 이미지 업로드
     try:
         with open(pdf_file_path, 'rb') as f:
             content = f.read()
@@ -136,7 +168,7 @@ def send_pdf_to_slack(pdf_file_path):
     if content is not None:
         data = {
             "filename": pdf_file_path,
-            "length": len(content),  # 파일 크기(바이트 단위)
+            "length": len(content),
         }
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
         response = requests.post(url="https://slack.com/api/files.getUploadURLExternal", headers=headers, data=data)
@@ -146,21 +178,17 @@ def send_pdf_to_slack(pdf_file_path):
     upload_response = requests.post(url=upload_url, files={'file': content})
     print(upload_response.text)
     attachment = {
-    "files": [{
-        "id": file_id,
-        "title": pdf_file_path
-    }],
-    "channel_id": CHANNEL_ID # 업로드할 채널 ID
+        "files": [{
+            "id": file_id,
+            "title": pdf_file_path
+        }],
+        "channel_id": CHANNEL_ID
     }
     headers['Content-Type'] = 'application/json; charset=utf-8'
     upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
     print(upload_response.text)
     print("✅ Slack 파일 업로드 및 메시지 전송 완료!")
 
-# 실행
-if len(up_stock_tickers) == 0:
-    print("상승 종목 없음.")
-    exit()
-
+# PDF 생성 및 슬랙 전송
 pdf_path = save_to_pdf(up_stock_tickers, normalized, ticker_to_name)
 send_pdf_to_slack(pdf_path)
