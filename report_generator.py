@@ -12,13 +12,13 @@ import requests
 import json
 
 # 날짜 설정
-end_date = datetime.today()
+end_date = datetime.today() + timedelta(days=1)
 start_date = end_date - timedelta(days=60)
 target_date = datetime.today()
-target_dt = pd.to_datetime(target_date)
+target_dt = pd.to_datetime(target_date.strftime('%Y-%m-%d'))
 
 # 시가총액 상위 100종목
-today_str = end_date.strftime('%Y%m%d')
+today_str = datetime.today().strftime('%Y%m%d')
 market_cap_df = stock.get_market_cap_by_ticker(today_str)
 top100_df = market_cap_df.sort_values(by='시가총액', ascending=False).head(100)
 top100_tickers = top100_df.index.to_list()
@@ -65,19 +65,16 @@ if target_dt not in returns.index:
 
 kospi_ret = returns.loc[target_dt]['KOSPI']
 if kospi_ret >= 0:
-    msg = f"📈 `{target_date.strftime('%Y-%m-%d')}`는 코스피가 하락한 날이 아닙니다."
-    send_text_to_slack(msg)
-    exit()
-    
-# 조건 검사
-if target_dt not in returns.index:
-    print(f"{target_date} 데이터 없음.")
-    exit()
-
-kospi_ret = returns.loc[target_dt]['KOSPI']
-if kospi_ret >= 0:
-    print(f"{target_date}는 코스피가 하락한 날이 아닙니다.")
-    exit()
+    msg = (
+        f"📈 *`{target_date.strftime('%Y-%m-%d')}` 코스피 지수 상승!*\n"
+        f"> 🔴 *KOSPI 수익률:* `{kospi_ret:.2%}`\n"
+    )
+else:
+    msg = (
+        f"📉 *`{target_date.strftime('%Y-%m-%d')}` 코스피 지수 하락!*\n"
+        f"> 🔵 *KOSPI 수익률:* `{kospi_ret:.2%}`\n"
+    )
+send_text_to_slack(msg)
 
 # 상승 종목 추출
 daily_returns = returns.loc[target_dt].drop('KOSPI')
