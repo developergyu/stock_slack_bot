@@ -14,7 +14,7 @@ import json
 # 날짜 설정
 end_date = datetime.today()
 start_date = end_date - timedelta(days=60)
-target_date = "2025-07-22"
+target_date = datetime.today()
 target_dt = pd.to_datetime(target_date)
 
 # 시가총액 상위 100종목
