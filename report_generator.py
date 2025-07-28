@@ -100,16 +100,18 @@ if len(up_stock_tickers) == 0:
     exit()
 
 # 상승 종목별 뉴스 수집 및 슬랙 메시지 생성
-news_message = f"🗞️ *{target_date.strftime('%Y-%m-%d')} 상승 종목별 뉴스 요약 (최대 3건씩)*\n"
+news_message = f"🗞️ *{target_date.strftime('%Y-%m-%d')} 상승 종목별 뉴스 요약 (최대 3건씩)*\n\n"
 for ticker in up_stock_tickers:
     name = ticker_to_name.get(ticker, ticker)
     query = name
     news_list = get_google_news_rss(query, count=3)
-    news_message += f"\n*{name} ({ticker})*\n"
+    # 종목명 강조 및 구분선 추가
+    news_message += f"*🔹🔹🔹🔹 {name} ({ticker})🔹🔹🔹🔹*\n"
     if news_list:
-        news_message += "\n".join(news_list)
+        news_message += "\n".join(news_list) + "\n"
     else:
         news_message += "- 뉴스 없음\n"
+    news_message += "\n" + ("─" * 30) + "\n\n"  # 구분선
 
 # 슬랙으로 뉴스 메시지 전송
 send_text_to_slack(news_message)
