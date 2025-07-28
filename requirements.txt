@@ -4,3 +4,4 @@ matplotlib
 pykrx
 slack_sdk
 requests
+feedparser
