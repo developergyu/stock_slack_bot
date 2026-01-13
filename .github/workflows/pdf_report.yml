@@ -23,4 +23,5 @@ jobs:
       - name: 📄 Run script to generate PDF
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          KRX_API_KEY: ${{ secrets.KRX_API_KEY }}
         run: python report_generator.py
