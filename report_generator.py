@@ -17,7 +17,7 @@ KRX_API_KEY = os.environ.get("KRX_API_KEY")
 SLACK_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 CHANNEL_ID = "C097595CPF1"
 
-KRX_URL = "https://openapi.krx.co.kr/svc/apis/sto/stk_bydd_trd"
+KRX_URL = "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd"
 
 headers_krx = {
     "AUTH_KEY": KRX_API_KEY
