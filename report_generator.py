@@ -202,7 +202,7 @@ def save_to_pdf(tickers, norm_df, name_map, filename=None):
     per_page = 6
     total_pages = math.ceil(len(tickers) / per_page)
 
-    plt.rcParams['font.family'] = 'Malgun Gothic'   # Windows
+    plt.rcParams['font.family'] = 'NanumGothic'   # Linux
     plt.rcParams['axes.unicode_minus'] = False      # 음수 기호 깨짐 방지
 
     # PDF 저장
