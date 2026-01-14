@@ -46,10 +46,22 @@ df_krx = pd.DataFrame(resp.json()["OutBlock_1"])
 df_krx["MKTCAP"] = pd.to_numeric(df_krx["MKTCAP"], errors="coerce")
 df_krx = df_krx.dropna(subset=["MKTCAP"])
 
-top100_df = df_krx.sort_values("MKTCAP", ascending=False).head(100)
+top100_df = (
+    df_krx[["ISU_CD", "ISU_NM", "MKTCAP"]]
+    .dropna()
+    .astype(str)
+)
+
+# 종목코드 정제 (숫자 6자리만 허용)
+top100_df = top100_df[top100_df["ISU_CD"].str.match(r"^\d{6}$")]
+
+top100_df["MKTCAP"] = pd.to_numeric(top100_df["MKTCAP"], errors="coerce")
+top100_df = top100_df.dropna(subset=["MKTCAP"])
+
+top100_df = top100_df.sort_values("MKTCAP", ascending=False).head(100)
 
 codes = top100_df["ISU_CD"].tolist()
-names = dict(zip(top100_df["ISU_CD"], top100_df["ISU_NM"]))
+names = top100_df.set_index("ISU_CD")["ISU_NM"].to_dict()
 
 yf_tickers = [f"{code}.KS" for code in codes]
 ticker_to_name = {f"{code}.KS": name for code, name in names.items()}
@@ -68,7 +80,7 @@ kospi_close = kospi_df["Close"]
 ############################################
 # 5. 데이터 결합 및 수익률
 ############################################
-combined_df = pd.DataFrame({"KOSPI": kospi_close})
+combined_df = kospi_df[["Close"]].rename(columns={"Close": "KOSPI"})
 
 for t in yf_tickers:
     if t in stock_df.columns:
@@ -95,14 +107,27 @@ def send_text_to_slack(text):
 # 7. Google News RSS
 ############################################
 def get_google_news_rss(query, count=3):
-    q = urllib.parse.quote_plus(query)
-    url = f"https://news.google.com/rss/search?q={q}&hl=ko&gl=KR&ceid=KR:ko"
-    feed = feedparser.parse(url)
+    if query is None:
+        return []
 
-    items = []
-    for e in feed.entries[:count]:
-        items.append(f"- {e.title}\n  {e.link}")
-    return items
+    # ⭐ 무조건 문자열로 변환
+    query = str(query).strip()
+
+    if query == "" or query.lower() == "nan":
+        return []
+
+    encoded_query = urllib.parse.quote_plus(query)
+    rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
+
+    feed = feedparser.parse(rss_url)
+
+    news_items = []
+    for entry in feed.entries[:count]:
+        title = entry.title
+        link = entry.link
+        news_items.append(f"- {title}\n  {link}")
+
+    return news_items
 
 ############################################
 # 8. 코스피 지수 메시지
@@ -113,34 +138,56 @@ if target_dt not in returns.index:
 
 kospi_ret = returns.loc[target_dt]["KOSPI"]
 
+if isinstance(kospi_ret, pd.Series):
+    kospi_ret = kospi_ret.iloc[-1]
+
 if kospi_ret >= 0:
-    send_text_to_slack(
-        f"📈 *{target_dt.date()} 코스피 상승*\n"
-        f"> 🔴 수익률: `{kospi_ret:.2%}`"
+    msg = (
+        f"📈 *`{target_dt.strftime('%Y-%m-%d')}` 코스피 지수 상승!*\n"
+        f"> 🔴 *KOSPI 수익률:* `{kospi_ret:.2%}`\n"
     )
 else:
-    send_text_to_slack(
-        f"📉 *{target_dt.date()} 코스피 하락*\n"
-        f"> 🔵 수익률: `{kospi_ret:.2%}`"
+    msg = (
+        f"📉 *`{target_dt.strftime('%Y-%m-%d')}` 코스피 지수 하락!*\n"
+        f"> 🔵 *KOSPI 수익률:* `{kospi_ret:.2%}`\n"
     )
+
+send_text_to_slack(msg)
+
 
 ############################################
 # 9. 상승 종목 + 뉴스
 ############################################
 daily_returns = returns.loc[target_dt].drop("KOSPI")
 up_stocks = daily_returns[daily_returns > 0]
+up_stock_tickers = up_stocks.index.tolist()
 
-news_msg = f"🗞️ *{target_dt.date()} 상승 종목 뉴스 요약*\n\n"
+daily_returns = returns.loc[target_dt].drop('KOSPI')
+up_stocks = daily_returns[daily_returns > 0]
+up_stock_tickers = up_stocks.index.tolist()
 
-for ticker in up_stocks.index:
+if len(up_stock_tickers) == 0:
+    print("상승 종목 없음.")
+    exit()
+
+# 상승 종목별 뉴스 수집 및 슬랙 메시지 생성
+news_message = f"🗞️ *{target_dt.strftime('%Y-%m-%d')} 상승 종목별 뉴스 요약 (최대 3건씩)*\n\n"
+for ticker in up_stock_tickers:
+    ticker_tuple = ticker[0]           # ('005930.KS', '')
+    ticker = ticker_tuple
     name = ticker_to_name.get(ticker, ticker)
-    news = get_google_news_rss(name, 3)
+    query = name
+    news_list = get_google_news_rss(query, count=3)
+    # 종목명 강조 및 구분선 추가
+    news_message += f"*🔹🔹🔹🔹 {name} ({ticker})🔹🔹🔹🔹*\n"
+    if news_list:
+        news_message += "\n".join(news_list) + "\n"
+    else:
+        news_message += "- 뉴스 없음\n"
+    news_message += "\n" + ("─" * 30) + "\n\n"  # 구분선
 
-    news_msg += f"*🔹 {name} ({ticker})*\n"
-    news_msg += "\n".join(news) if news else "- 뉴스 없음"
-    news_msg += "\n\n" + "─" * 30 + "\n\n"
-
-send_text_to_slack(news_msg)
+# 슬랙으로 뉴스 메시지 전송
+send_text_to_slack(news_message)
 
 ############################################
 # 10. PDF 생성
@@ -148,46 +195,107 @@ send_text_to_slack(news_msg)
 plot_df = combined_df.loc[combined_df.index >= (target_dt - timedelta(days=30))]
 normalized = plot_df / plot_df.iloc[0]
 
-def save_to_pdf(tickers):
-    filename = f"report_{target_dt.strftime('%Y%m%d')}.pdf"
+def save_to_pdf(tickers, norm_df, name_map, filename=None):
+    if filename is None:
+        today = datetime.now().strftime("%Y%m%d")
+        filename = f"report_{today}.pdf"
     per_page = 6
+    total_pages = math.ceil(len(tickers) / per_page)
 
+    plt.rcParams['font.family'] = 'Malgun Gothic'   # Windows
+    plt.rcParams['axes.unicode_minus'] = False      # 음수 기호 깨짐 방지
+
+    # PDF 저장
     with PdfPages(filename) as pdf:
-        for i in range(0, len(tickers), per_page):
+        for page in range(total_pages):
             fig, axes = plt.subplots(2, 3, figsize=(12, 8))
             axes = axes.flatten()
+            start = page * per_page
 
-            for ax, t in zip(axes, tickers[i:i+per_page]):
-                ax.plot(normalized.index, normalized[t], label=ticker_to_name[t])
-                ax.plot(normalized.index, normalized["KOSPI"], "--", label="KOSPI")
-                ax.set_title(ticker_to_name[t])
-                ax.legend()
-                ax.grid()
+            for i in range(per_page):
+                idx = start + i
+                if idx >= len(tickers):
+                    axes[i].axis('off')
+                    continue
+                ticker_tuple = tickers[idx]           # ('005930.KS', '')
+                ticker = ticker_tuple[0]              # '005930.KS'
+                name = name_map.get(ticker, ticker)   # 종목명 가져오기
+                axes[i].plot(norm_df.index, norm_df[ticker], label=name, color='red')
+                axes[i].plot(norm_df.index, norm_df['KOSPI'], label='KOSPI', linestyle='--', color='gray')
+                axes[i].set_title(name)               # 한글 깨짐 해결됨
+                axes[i].tick_params(axis='x', rotation=30)
+                axes[i].legend()
+                axes[i].grid(True)
 
+            fig.tight_layout()
             pdf.savefig(fig)
             plt.close(fig)
 
+    print(f"✅ PDF 저장 완료: {filename}")
     return filename
 
-pdf_path = save_to_pdf(up_stocks.index.tolist())
+# pdf_path = save_to_pdf(up_stocks.index.tolist())
+
 
 ############################################
 # 11. PDF Slack 업로드
 ############################################
-def send_pdf_to_slack(path):
-    with open(path, "rb") as f:
-        content = f.read()
-
+def send_pdf_to_slack(pdf_file_path):
+    
+    CHANNEL_ID = "C097595CPF1"
     headers = {
-        "Authorization": f"Bearer {SLACK_TOKEN}"
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {SLACK_TOKEN}'
     }
+    try:
+        with open(pdf_file_path, 'rb') as f:
+            content = f.read()
+    except FileNotFoundError:
+        content = None
+    if content is not None:
+        data = {
+            "filename": pdf_file_path,
+            "length": len(content),
+        }
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        response = requests.post(url="https://slack.com/api/files.getUploadURLExternal", headers=headers, data=data)
+    data = json.loads(response.text)
+    upload_url = data.get("upload_url")
+    file_id = data.get("file_id")
+    upload_response = requests.post(url=upload_url, files={'file': content})
+    print(upload_response.text)
+    attachment = {
+        "files": [{
+            "id": file_id,
+            "title": pdf_file_path
+        }],
+        "channel_id": CHANNEL_ID
+    }
+    headers['Content-Type'] = 'application/json; charset=utf-8'
+    upload_response = requests.post(url="https://slack.com/api/files.completeUploadExternal", headers=headers, json=attachment)
+    print(upload_response.text)
+    print("✅ Slack 파일 업로드 및 메시지 전송 완료!")
 
-    res = requests.post(
-        "https://slack.com/api/files.upload",
-        headers=headers,
-        files={"file": content},
-        data={"channels": CHANNEL_ID, "filename": path}
-    )
-    print(res.text)
 
+# def send_message_with_file_notice(filename):
+#     headers = {
+#         "Authorization": f"Bearer {SLACK_TOKEN}",
+#         "Content-Type": "application/json"
+#     }
+
+#     payload = {
+#         "channel": CHANNEL_ID,
+#         "text": f"📄 오늘의 주식 리포트가 업로드되었습니다\n• 파일명: `{filename}`"
+#     }
+
+#     res = requests.post(
+#         "https://slack.com/api/chat.postMessage",
+#         headers=headers,
+#         json=payload
+#     )
+#     print(res.text)
+
+
+# if pdf_path:
+pdf_path = save_to_pdf(up_stock_tickers, normalized, ticker_to_name)
 send_pdf_to_slack(pdf_path)
