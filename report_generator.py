@@ -31,10 +31,6 @@ target_dt = pd.to_datetime(today.strftime('%Y-%m-%d'))
 
 # 전일 (단순 D-1, 필요시 영업일 계산 로직 추가 가능)
 ##base_date = (today - timedelta(days=1)).strftime("%Y%m%d")
-base_date = get_latest_business_day(datetime.today())
-############################################
-# 3. KRX 전일 시가총액 TOP100
-############################################
 
 def get_latest_business_day(base_date, max_retry=10):
     """
@@ -59,6 +55,11 @@ def get_latest_business_day(base_date, max_retry=10):
             return check_date
 
     raise Exception("최근 영업일 데이터를 찾을 수 없습니다.")
+    
+base_date = get_latest_business_day(datetime.today())
+############################################
+# 3. KRX 전일 시가총액 TOP100
+############################################
     
 resp = requests.get(
     KRX_URL,
