@@ -285,6 +285,9 @@ def send_pdf_to_slack(pdf_file_path):
         }
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
         response = requests.post(url="https://slack.com/api/files.getUploadURLExternal", headers=headers, data=data)
+        result = response.json()
+        # 이 부분을 꼭 확인해 보세요!
+        print(f"디버그용 응답 결과: {result}")
     data = json.loads(response.text)
     upload_url = data.get("upload_url")
     file_id = data.get("file_id")
