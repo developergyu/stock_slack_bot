@@ -26,7 +26,7 @@ headers_krx = {
 ############################################
 # 2. 날짜 설정
 ############################################
-today = datetime.today()
+today = datetime.today() - 3
 target_dt = pd.to_datetime(today.strftime('%Y-%m-%d'))
 
 # 전일 (단순 D-1, 필요시 영업일 계산 로직 추가 가능)
